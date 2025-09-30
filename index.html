@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Intro — Sports Pose Tutorial</title>
+  <meta name="description" content="Intro to markerless pose estimation" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <nav class="nav">
+    <div class="logo"><a href="index.html" style="text-decoration:none;color:#dfe7f3">SPORTS POSE TUTORIAL</a></div>
+    <a href="index.html">Intro</a>
+    <a href="sensors.html">Sensors</a>
+    <a href="metrics.html">Metrics</a>
+    <a href="success.html">Success & Failures</a>
+    <a href="challenges.html">Challenges</a>
+    <a href="future.html">Future</a>
+    <a href="demo.html">Demo & Code</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="bib.html">Bibliography</a>
+  </nav>
+</header>
+<main>
+
+<section class="hero card">
+  <div class="left">
+    
+    <h1 class="title">Markerless Human Pose Estimation for Sports</h1>
+    <p class="subtitle">From ordinary video to 2D/3D kinematics. Learn pipelines, core algorithms, deployment trade-offs, and validation against motion capture.</p>
+    <div class="audio-ctrl" data-read="#intro-text"><button aria-label="Play intro narration" onclick="speak('#intro-text')">▶︎ Play narration</button></div>
+  </div>
+  <figure>
+    <img class="img" loading="lazy" src="https://imgs.search.brave.com/DlMrfeBSI6upRUpTuucfYVroMmSzix4rzZQz7MCkvAM/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9lZGl0/b3IuYW5hbHl0aWNz/dmlkaHlhLmNvbS91/cGxvYWRzLzY1NjAz/ZmlnLnBuZw" alt="BlazePose body landmarks" />
+    <figcaption>BlazePose topology (© Google Research). </figcaption>
+  </figure>
+</section>
+<section class="card" style="padding:22px">
+  <div id="intro-text" class="p">
+    <strong>Why markerless?</strong> Labs with markers are precise but expensive and intrusive. Modern CV quantifies technique, workload, and injury risk proxies from commodity cameras. You’ll learn sensors, kinematics, validation, and deployment.
+  </div>
+  <div class="grid two" style="margin-top:14px">
+    <div class="card" style="padding:16px">
+      <h3 style="margin:0 0 8px">Learning Objectives</h3>
+      <ul style="margin:0">
+        <li>Design a single/multi‑view capture setup, with depth & IMU options.</li>
+        <li>Compute 2D/3D joint angles, velocities, symmetry indices.</li>
+        <li>Diagnose failure modes and mitigate them.</li>
+        <li>Deploy real‑time on edge devices.</li>
+        <li>Validate against gold‑standard motion capture.</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:16px">
+      <h3 style="margin:0 0 8px">Real‑World Photo Upload (new)</h3>
+      <p class="p">Throughout the site, you can upload your own sports photos to visualize skeletons and compute knee angles & asymmetry.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 • Manthankumar Patel • Hosted on GitHub Pages.</p>
+</footer>
+</main>
+<script src="script.js"></script>
+</body>
+</html>

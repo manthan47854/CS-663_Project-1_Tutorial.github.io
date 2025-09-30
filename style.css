@@ -1,0 +1,54 @@
+
+:root{
+  --bg:#0b0e14; --panel:#111624; --muted:#9aa4b2; --brand:#7c5cff; --brand2:#19c6ff; --ok:#27ae60; --warn:#f39c12; --err:#e74c3c;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans"; color:#e9edf3; background:linear-gradient(180deg,#0b0e14 0%, #0f1320 60%, #0b0e14 100%)}
+a{color:var(--brand)}
+header{position:sticky; top:0; z-index:50; backdrop-filter:saturate(140%) blur(8px); background:rgba(11,14,20,0.7); border-bottom:1px solid rgba(255,255,255,0.06)}
+.nav{display:flex; align-items:center; gap:20px; padding:14px 20px; max-width:1200px; margin:0 auto}
+.logo{font-weight:800; letter-spacing:.3px; font-size:18px}
+.nav a{font-weight:600; text-decoration:none; color:#dfe7f3; opacity:.9}
+.nav a:hover{opacity:1}
+.hero{max-width:1200px; margin:32px auto 0; padding:40px 20px; display:grid; grid-template-columns:1.1fr .9fr; gap:28px; align-items:center}
+.card{background:radial-gradient(1200px 300px at -10% -20%, rgba(124,92,255,.08), transparent 70%), linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.hero .left{padding:28px}
+.title{font-size:42px; line-height:1.1; margin:0 0 14px; background:linear-gradient(90deg,var(--brand),var(--brand2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent}
+.subtitle{color:var(--muted); font-size:18px}
+.badge{display:inline-block; padding:6px 10px; border-radius:999px; background:rgba(124,92,255,.18); border:1px solid rgba(124,92,255,.5); font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#d7cffc}
+.grid{display:grid; gap:18px}
+.two{grid-template-columns:1fr 1fr}
+.three{grid-template-columns:repeat(3,1fr)}
+section{max-width:1200px; margin:32px auto; padding:0 20px}
+section .h{font-size:28px; margin:26px 0 10px}
+section .p{color:#ced8e7; opacity:.95}
+.img{width:100%; border-radius:16px; border:1px solid rgba(255,255,255,.08); display:block; background:#000}
+figure{margin:16px 0}
+figcaption{font-size:12px; color:#b8c2d3; margin-top:6px}
+.toc{display:flex; flex-wrap:wrap; gap:12px}
+.toc a{padding:10px 12px; border-radius:12px; background:#0f1629; border:1px solid rgba(255,255,255,.08); text-decoration:none; color:#dfe7f3}
+.pill{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#0f1629; border:1px solid rgba(255,255,255,.08); color:#bcd3ff}
+.callout{border-left:3px solid var(--brand); padding:12px 14px; background:rgba(124,92,255,.08); border-radius:12px}
+pre{background:#0c1222; border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:14px; overflow:auto}
+code{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; color:#e8f0ff}
+.quiz{background:#0c1222; border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px}
+.quiz h4{margin:0 0 10px}
+.q{margin:12px 0}
+.btn{background:linear-gradient(90deg,var(--brand),var(--brand2)); border:none; color:white; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer}
+.btn:disabled{opacity:.6; cursor:not-allowed}
+.score{font-weight:800}
+footer{margin:40px 0 80px; color:#9fb0c7}
+.credit{font-size:12px}
+.audio-ctrl{display:inline-flex; gap:8px; align-items:center}
+.audio-ctrl button{background:#0f1629; color:#dfe7f3; border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:6px 10px; cursor:pointer}
+.audio-ctrl button:hover{border-color:rgba(255,255,255,.16)}
+.gallery{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+.gallery .tile{position:relative}
+.overlay-canvas{position:absolute; left:0; top:0; border-radius:16px; pointer-events:none}
+.kpi{display:flex; gap:12px; flex-wrap:wrap; margin-top:8px}
+.kpi .tag{background:#0f1629; border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:6px 10px; font-size:12px}
+@media (max-width: 900px){
+  .hero{grid-template-columns:1fr;}
+  .gallery{grid-template-columns:1fr}
+}

@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo — Sports Pose Tutorial</title>
+  <meta name="description" content="Live demo MoveNet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <nav class="nav">
+    <div class="logo"><a href="index.html" style="text-decoration:none;color:#dfe7f3">SPORTS POSE TUTORIAL</a></div>
+    <a href="index.html">Intro</a>
+    <a href="sensors.html">Sensors</a>
+    <a href="metrics.html">Metrics</a>
+    <a href="success.html">Success & Failures</a>
+    <a href="challenges.html">Challenges</a>
+    <a href="future.html">Future</a>
+    <a href="demo.html">Demo & Code</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="bib.html">Bibliography</a>
+  </nav>
+</header>
+<main>
+
+<section id="demo">
+  <h2 class="h">Real‑World Demo: Webcam + Local Video</h2>
+  <p class="p">Use your webcam for live skeleton overlay, or upload a local training video (MP4/MOV). Everything runs in your browser.</p>
+ <div class="grid two">
+  <div class="card" style="padding:12px">
+    <h3>Webcam</h3>
+
+    <div class="video-wrap">
+      <video id="cam" autoplay playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <div class="pill">
+      <span>L-Knee:</span> <span id="lk">–</span>°
+      <span style="margin-left:10px">R-Knee:</span> <span id="rk">–</span>°
+      <span style="margin-left:10px">Asym:</span> <span id="asym">–</span>
+    </div>
+
+    <div style="margin-top:8px">
+      <button class="btn" onclick="startWebcamDemo()">Start Webcam Demo</button>
+    </div>
+  </div>
+
+  <div class="card" style="padding:12px">
+    <h3>Local Video Upload</h3>
+    <input type="file" accept="video/*" onchange="handleVideoUpload(event)" />
+    <div class="video-wrap" style="margin-top:8px">
+      <video id="upVideo" controls></video>
+      <canvas id="upCanvas"></canvas>
+    </div>
+    <p class="p">Tip: crop to the athlete; keep 720p for smoother inference.</p>
+  </div>
+</div>
+</section>
+
+<footer>
+  <p>© 2025 • Your Name • Hosted on GitHub Pages. Tutorial optimized for ~20–25 minutes with narration, media, and interactivity.</p>
+</footer>
+</main>
+<script src="script.js"></script>
+</body>
+</html>

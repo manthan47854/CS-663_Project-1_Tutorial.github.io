@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz — Sports Pose Tutorial</title>
+  <meta name="description" content="Interactive quiz" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <nav class="nav">
+    <div class="logo"><a href="index.html" style="text-decoration:none;color:#dfe7f3">SPORTS POSE TUTORIAL</a></div>
+    <a href="index.html">Intro</a>
+    <a href="sensors.html">Sensors</a>
+    <a href="metrics.html">Metrics</a>
+    <a href="success.html">Success & Failures</a>
+    <a href="challenges.html">Challenges</a>
+    <a href="future.html">Future</a>
+    <a href="demo.html">Demo & Code</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="bib.html">Bibliography</a>
+  </nav>
+</header>
+<main>
+
+<section id="quiz" class="quiz card">
+  <h3>Quick Check (5 questions)</h3>
+  <div class="q">
+    <strong>1.</strong> Which setup most improves 3D stability outdoors?
+    <label><input type="radio" name="q1" value="a"> Single 30fps camera</label>
+    <label><input type="radio" name="q1" value="b"> Two synced cameras at 60fps with calibration</label>
+    <label><input type="radio" name="q1" value="c"> Random handheld phone</label>
+  </div>
+  <div class="q">
+    <strong>2.</strong> Which model targets on‑device, single‑person tracking with 33 landmarks?
+    <label><input type="radio" name="q2" value="a"> OpenPose</label>
+    <label><input type="radio" name="q2" value="b"> BlazePose</label>
+    <label><input type="radio" name="q2" value="c"> KASportsFormer</label>
+  </div>
+  <div class="q">
+    <strong>3.</strong> A common failure mode in team sports video is:
+    <label><input type="radio" name="q3" value="a"> Controlled lighting</label>
+    <label><input type="radio" name="q3" value="b"> Occlusion/crowding</label>
+    <label><input type="radio" name="q3" value="c"> Tripods</label>
+  </div>
+  <div class="q">
+    <strong>4.</strong> Best way to validate markerless angles?
+    <label><input type="radio" name="q4" value="a"> Compare to gold‑standard motion capture with Bland–Altman</label>
+    <label><input type="radio" name="q4" value="b"> Ask the athlete</label>
+    <label><input type="radio" name="q4" value="c"> Eyeballing</label>
+  </div>
+  <div class="q">
+    <strong>5.</strong> Which trade‑off describes MoveNet Lightning vs Thunder?
+    <label><input type="radio" name="q5" value="a"> Lightning = accuracy; Thunder = latency</label>
+    <label><input type="radio" name="q5" value="b"> Lightning = lower latency; Thunder = higher accuracy</label>
+    <label><input type="radio" name="q5" value="c"> They are identical</label>
+  </div>
+  <button class="btn" onclick="grade()">Grade Quiz</button>
+  <p class="p">Score: <span class="score" id="score">0/5</span></p>
+</section>
+
+<footer>
+  <p>© 2025 • Your Name • Hosted on GitHub Pages. Tutorial optimized for ~20–25 minutes with narration, media, and interactivity.</p>
+</footer>
+</main>
+<script src="script.js"></script>
+</body>
+</html>

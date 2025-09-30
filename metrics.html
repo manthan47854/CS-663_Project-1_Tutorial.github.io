@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Metrics — Sports Pose Tutorial</title>
+  <meta name="description" content="Metrics from keypoints" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <nav class="nav">
+    <div class="logo"><a href="index.html" style="text-decoration:none;color:#dfe7f3">SPORTS POSE TUTORIAL</a></div>
+    <a href="index.html">Intro</a>
+    <a href="sensors.html">Sensors</a>
+    <a href="metrics.html">Metrics</a>
+    <a href="success.html">Success & Failures</a>
+    <a href="challenges.html">Challenges</a>
+    <a href="future.html">Future</a>
+    <a href="demo.html">Demo & Code</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="bib.html">Bibliography</a>
+  </nav>
+</header>
+<main>
+
+<section id="metrics">
+  <h2 class="h">Extracting Performance Metrics</h2>
+  <p class="p">Compute <em>joint angles</em>, <em>angular velocity</em>, <em>stride times</em>, and <em>symmetry indices</em>. For injury risk proxies, track frontal‑plane knee valgus, foot‑strike patterns, and workload accumulators (counts × ROM × velocity).</p>
+  <div class="gallery">
+    <div class="tile">
+      <img id="img1" class="img" alt="Upload or drop a sports photo" />
+      <canvas id="can1" class="overlay-canvas"></canvas>
+      <div class="kpi"></div>
+      <div style="margin-top:8px">
+        <input type="file" accept="image/*" onchange="handleImageUpload(event,'img1','can1')">
+        <button class="btn" onclick="runPoseOnImage(document.getElementById('img1'), document.getElementById('can1'))">Run on image</button>
+      </div>
+      <figcaption>Upload a real‑world sports photo (e.g., squat, lunge, sprint). Then click <em>Run on image</em> to overlay skeleton and compute angles.</figcaption>
+    </div>
+    <div class="tile">
+      <img id="img2" class="img" alt="Upload sports photo 2" />
+      <canvas id="can2" class="overlay-canvas"></canvas>
+      <div class="kpi"></div>
+      <div style="margin-top:8px">
+        <input type="file" accept="image/*" onchange="handleImageUpload(event,'img2','can2')">
+        <button class="btn" onclick="runPoseOnImage(document.getElementById('img2'), document.getElementById('can2'))">Run on image</button>
+      </div>
+      <figcaption>Second example — compare left vs right limb symmetry.</figcaption>
+    </div>
+    <div class="tile">
+      <img id="img3" class="img" alt="Upload sports photo 3" />
+      <canvas id="can3" class="overlay-canvas"></canvas>
+      <div class="kpi"></div>
+      <div style="margin-top:8px">
+        <input type="file" accept="image/*" onchange="handleImageUpload(event,'img3','can3')">
+        <button class="btn" onclick="runPoseOnImage(document.getElementById('img3'), document.getElementById('can3'))">Run on image</button>
+      </div>
+      <figcaption>Third example — use a different sport pose (e.g., pitching, hurdling).</figcaption>
+    </div>
+  </div>
+  <div class="grid two" style="margin-top:18px">
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">Angles from 2D</h3>
+      <pre><code>function angleDeg(a,b,c){
+  const ab = {x:a.x-b.x, y:a.y-b.y};
+  const cb = {x:c.x-b.x, y:c.y-b.y};
+  const dot = ab.x*cb.x + ab.y*cb.y;
+  const mab = Math.hypot(ab.x,ab.y); const mcb = Math.hypot(cb.x,cb.y);
+  return Math.acos(Math.max(-1,Math.min(1, dot/(mab*mcb))))*180/Math.PI;
+}</code></pre>
+      <p class="p"><strong>Symmetry index:</strong> <code>100 * |L - R| / (0.5*(L + R) + ε)</code>.</p>
+    </div>
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">3D Multi‑View Outline</h3>
+      <ol>
+        <li>Detect 2D per view.</li>
+        <li>Associate views; triangulate joints.</li>
+        <li>Inverse kinematics for bone‑length consistency.</li>
+        <li>Filter then compute anatomical angles & events.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 • Your Name • Hosted on GitHub Pages. Tutorial optimized for ~20–25 minutes with narration, media, and interactivity.</p>
+</footer>
+</main>
+<script src="script.js"></script>
+</body>
+</html>

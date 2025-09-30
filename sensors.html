@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sensors — Sports Pose Tutorial</title>
+  <meta name="description" content="Sensors for markerless pose" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <nav class="nav">
+    <div class="logo"><a href="index.html" style="text-decoration:none;color:#dfe7f3">SPORTS POSE TUTORIAL</a></div>
+    <a href="index.html">Intro</a>
+    <a href="sensors.html">Sensors</a>
+    <a href="metrics.html">Metrics</a>
+    <a href="success.html">Success & Failures</a>
+    <a href="challenges.html">Challenges</a>
+    <a href="future.html">Future</a>
+    <a href="demo.html">Demo & Code</a>
+    <a href="quiz.html">Quiz</a>
+    <a href="bib.html">Bibliography</a>
+  </nav>
+</header>
+<main>
+
+<section id="sensors">
+  <h2 class="h">Sensor Possibilities</h2>
+  <p class="p">Start with a <strong>single RGB camera</strong> at 30–60 fps. For 3D stability and depth disambiguation, add <strong>multi‑view</strong> cameras or a <strong>depth camera</strong>. Optional <strong>IMU fusion</strong> reduces drift and resolves occlusions.</p>
+  <div class="grid three">
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">Camera Placement</h3>
+      <ul>
+        <li><strong>Orthogonal views:</strong> sagittal + frontal for running/cutting.</li>
+        <li><strong>Height:</strong> hip‑to‑chest level; minimize perspective distortion.</li>
+        <li><strong>Shutter:</strong> ≥1/500s outdoors; add light; raise ISO as needed.</li>
+        <li><strong>Lens:</strong> 24–35mm equiv to reduce rolling‑shutter and distortion.</li>
+      </ul>
+    </div>
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">Multi‑View Calibration & Sync</h3>
+      <ol>
+        <li>Estimate intrinsics (fx,fy,cx,k1..) via checkerboard.</li>
+        <li>Solve extrinsics (R,t) in the action volume.</li>
+        <li>Synchronize via hardware trigger or NTP + clap/LED.</li>
+        <li>Verify reprojection error &lt; 0.8 px.</li>
+      </ol>
+    </div>
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">Depth & IMUs</h3>
+      <ul>
+        <li><strong>Depth:</strong> robust indoors; ToF beats structured‑light in sun.</li>
+        <li><strong>IMUs:</strong> complementary/UKF fusers stabilize orientation.</li>
+        <li><strong>Mounting:</strong> distal segments (feet, wrists) capture velocity well.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout"><strong>Tip:</strong> Record a 5–10s clip per drill for repeatable benchmarking.</div>
+</section>
+
+<footer>
+  <p>© 2025 • Your Name • Hosted on GitHub Pages. Tutorial optimized for ~20–25 minutes with narration, media, and interactivity.</p>
+</footer>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
