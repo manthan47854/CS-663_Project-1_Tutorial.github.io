@@ -26,43 +26,146 @@
   </nav>
 </header>
 <main>
+<section id="sensing">
+  <h2 class="h">2. Sensing &amp; Data Acquisition</h2>
 
-<section id="sensors">
-  <h2 class="h">Sensor Possibilities</h2>
-  <p class="p">Start with a <strong>single RGB camera</strong> at 30–60 fps. For 3D stability and depth disambiguation, add <strong>multi‑view</strong> cameras or a <strong>depth camera</strong>. Optional <strong>IMU fusion</strong> reduces drift and resolves occlusions.</p>
-  <div class="grid three">
+  <div class="card" style="padding:14px">
+    <h3 style="margin-top:0">2.1 Sensor Possibilities</h3>
+
+    <h4>Single RGB camera (baseline)</h4>
+    <ul>
+      <li><strong>Frame rate:</strong> 30–60 fps for general drills; 60–120 fps recommended for sprints, hurdles, jumps, rapid cuts. Higher fps reduces temporal aliasing for contact/flight detection.</li>
+      <li><strong>Resolution:</strong> 1080p minimum; 4K preferred when cropping or for multi-person scenes (allows digital zoom while maintaining joint pixel density).</li>
+      <li><strong>Shutter &amp; exposure:</strong> Manual exposure; lock auto-exposure/auto-WB to avoid flicker. Use ND filters outdoors to hold fast shutter without overexposing. Disable electronic image stabilization (it warps geometry).</li>
+      <li><strong>Sensor/codec:</strong> Prefer global-shutter cameras when available; otherwise keep rolling-shutter readout short (high-end phone “main” lenses usually best). Record constant-frame-rate (CFR) at ≥20 Mbps.</li>
+    </ul>
+
+    <h4>Multi-view RGB (preferred for 3D)</h4>
+    <ul>
+      <li>2–4 cameras with overlapping FOV covering the action volume.</li>
+      <li>Maintain baseline (camera spacing) of 1–5 m for close actions (gym) and 5–15 m for field sports.</li>
+      <li>Aim for 30°–90° angle between optical axes (≈60° ideal). Avoid near-colinear setups.</li>
+    </ul>
+
+    <h4>Depth cameras (optional)</h4>
+    <ul>
+      <li><strong>Time-of-Flight (ToF):</strong> Most robust indoors; longer range and fewer pattern-washout issues than structured-light. Typical useful range 0.5–6 m; depth noise grows with distance.</li>
+      <li><strong>Structured-light:</strong> Good indoors at short range (&lt;3 m), vulnerable to sunlight.</li>
+      <li><strong>Stereo RGB-D:</strong> Works indoors/outdoors with adequate texture; needs higher compute for matching.</li>
+    </ul>
+
+    <h4>IMU fusion (optional)</h4>
+    <ul>
+      <li>6-axis or 9-axis IMUs at 100–200 Hz for segment orientation stability during occlusion and fast rotations.</li>
+      <li>Especially valuable for distal segments (feet, wrists) where velocities change abruptly.</li>
+    </ul>
+
+    <p class="p"><strong>Rule of thumb:</strong> If the athlete crosses &gt;10 pixels between consecutive frames, increase fps or shutter speed to limit blur and preserve joint localization.</p>
+  </div>
+
+  <div class="grid two" style="margin-top:14px">
     <div class="card" style="padding:14px">
-      <h3 style="margin-top:0">Camera Placement</h3>
+      <h3 style="margin-top:0">2.2 Camera Placement</h3>
+
+      <h4>View geometry</h4>
       <ul>
-        <li><strong>Orthogonal views:</strong> sagittal + frontal for running/cutting.</li>
-        <li><strong>Height:</strong> hip‑to‑chest level; minimize perspective distortion.</li>
-        <li><strong>Shutter:</strong> ≥1/500s outdoors; add light; raise ISO as needed.</li>
-        <li><strong>Lens:</strong> 24–35mm equiv to reduce rolling‑shutter and distortion.</li>
+        <li><strong>Orthogonal views:</strong> sagittal + frontal for running/cutting. For throws/lifts, add oblique (≈45°) to capture transverse plane.</li>
+        <li><strong>Height:</strong> mount at hip-to-chest level to reduce perspective distortion; tilt ≤5° unless intentionally top-down.</li>
+        <li><strong>Distance/FOV:</strong> subject should occupy 30–60% of frame height; keep full body in frame through the entire motion.</li>
+        <li><strong>Lenses:</strong> 24–35 mm equivalent minimizes distortion while preserving FOV. Prefer the phone’s 1× main lens (usually best optics/low RS) over ultrawide.</li>
+      </ul>
+
+      <h4>Exposure guidelines</h4>
+      <ul>
+        <li><strong>Shutter:</strong> ≥1/1000 s for sprints/hurdles/jumps; ≥1/500 s for cutting/field drills; ≥1/250–1/500 s for strength lifts depending on bar speed.</li>
+        <li><strong>ISO/Aperture:</strong> raise ISO as needed; add light rather than slowing shutter. Indoors, avoid LED flicker by using shutter multiples of mains frequency (US: ~1/60, 1/120, etc.) when not at very fast shutter.</li>
+        <li><strong>Focus &amp; WB:</strong> manual or locked; use a mid-gray reference before capture.</li>
+      </ul>
+
+      <h4>Stability &amp; environment</h4>
+      <ul>
+        <li><strong>Stability:</strong> tripod or rigid clamp. If using a gimbal, lock horizon and disable EIS.</li>
+        <li><strong>Environment &amp; attire:</strong> high contrast with background; avoid loose or reflective clothing; ensure shoes and knees are visible (no long skirts/pants that occlude joints).</li>
       </ul>
     </div>
+
     <div class="card" style="padding:14px">
-      <h3 style="margin-top:0">Multi‑View Calibration & Sync</h3>
-      <ol>
-        <li>Estimate intrinsics (fx,fy,cx,k1..) via checkerboard.</li>
-        <li>Solve extrinsics (R,t) in the action volume.</li>
-        <li>Synchronize via hardware trigger or NTP + clap/LED.</li>
-        <li>Verify reprojection error &lt; 0.8 px.</li>
-      </ol>
-    </div>
-    <div class="card" style="padding:14px">
-      <h3 style="margin-top:0">Depth & IMUs</h3>
+      <h3 style="margin-top:0">2.3 Multi-View Calibration &amp; Synchronization</h3>
+
+      <h4>Intrinsics</h4>
       <ul>
-        <li><strong>Depth:</strong> robust indoors; ToF beats structured‑light in sun.</li>
-        <li><strong>IMUs:</strong> complementary/UKF fusers stabilize orientation.</li>
-        <li><strong>Mounting:</strong> distal segments (feet, wrists) capture velocity well.</li>
+        <li>Estimate (fx, fy, cx, cy, k1–k3, p1–p2) via checkerboard or AprilTag grid across the full FOV and at working distances.</li>
+        <li>Re-calibrate after any zoom/focus change.</li>
+      </ul>
+
+      <h4>Extrinsics</h4>
+      <ul>
+        <li>Solve camera poses (R, t) within the action volume.</li>
+        <li><strong>Static object calibration:</strong> checkerboard/AprilTags at multiple depths.</li>
+        <li><strong>Dynamic bundle adjustment:</strong> use the athlete’s tracked keypoints across views.</li>
+      </ul>
+
+      <h4>Scale &amp; scene constraints</h4>
+      <ul>
+        <li>Use known field markings (lane lines, hurdle spacing) for metric scale; optionally refine with ground-plane estimation.</li>
+      </ul>
+
+      <h4>Quality targets</h4>
+      <ul>
+        <li>Mean reprojection error &lt; 0.8 px in field conditions (≤0.5 px in lab).</li>
+        <li>Essential-matrix inlier ratio &gt;80%.</li>
+        <li>Triangulated point cheirality checks positive.</li>
+      </ul>
+
+      <h4>Temporal sync</h4>
+      <ul>
+        <li><strong>Best:</strong> hardware genlock or LTC timecode.</li>
+        <li><strong>Practical:</strong> NTP/PTP-synchronized clocks + clap/LED event; refine via cross-correlation of frame differences/optical-flow energy.</li>
+        <li>Keep drift &lt;1 frame per 5 min; apply time-warp correction if needed.</li>
+      </ul>
+
+      <h4>Rolling-shutter notes</h4>
+      <ul>
+        <li>If using RS cameras, estimate row readout time and apply RS rectification for fast horizontal motion.</li>
       </ul>
     </div>
   </div>
-  <div class="callout"><strong>Tip:</strong> Record a 5–10s clip per drill for repeatable benchmarking.</div>
+
+  <div class="grid two" style="margin-top:14px">
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">2.4 Depth &amp; IMUs (Fusion Details)</h3>
+
+      <h4>Depth cameras</h4>
+      <ul>
+        <li>Mount near the RGB camera to simplify extrinsics; avoid specular floors and bright windows in FOV.</li>
+        <li>Enable ambient-light and multipath suppression (if available). Use median/bilateral filters + temporal smoothing; discard depth beyond reliable range.</li>
+        <li>Register depth to RGB using calibrated extrinsics; fill small holes with edge-aware inpainting before 3D lifting.</li>
+      </ul>
+
+      <h4>IMUs</h4>
+      <ul>
+        <li><strong>Placement:</strong> distal segments (feet, wrists) for event timing and peak velocity; shank/thigh/forearm for segment orientation; secure with rigid straps/tape to reduce soft-tissue artifact.</li>
+        <li><strong>Calibration:</strong> short T-pose/N-pose for sensor-to-segment alignment; perform static bias calibration pre-session.</li>
+        <li><strong>Fusion:</strong> complementary/Madgwick/Mahony as lightweight options; UKF/EKF for tighter coupling with vision (state: segment quaternions, joint angles, gyro/accel biases). Use ZUPT at foot contact to constrain drift. Prefer 6-axis indoors (magnetometer often unreliable).</li>
+        <li><strong>Timing:</strong> sample IMUs at 100–200 Hz; timestamp at source; align to video via LED or high-amplitude audio tick.</li>
+      </ul>
+    </div>
+
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">2.5 Capture Protocol &amp; Practical Tips</h3>
+      <ul>
+        <li>Record 5–10 s per drill, 3–5 takes each. Include 2 s of still stance at start/end for baseline noise.</li>
+        <li>Slate metadata verbally or with a whiteboard (athlete, drill, load, set/rep, shoes, surface). Use a file naming scheme: <code>{sport}_{athleteID}_{drill}_{date}_{view}.mp4</code>.</li>
+        <li>For outdoor sun, shoot with the sun behind the camera or under overcast; avoid heat shimmer over long baselines.</li>
+        <li>Confirm the athlete remains fully in frame during the movement; rehearse paths once before recording.</li>
+        <li>Disable background apps/notifications on phones to avoid variable frame pacing.</li>
+      </ul>
+    </div>
+  </div>
 </section>
 
 <footer>
-  <p>© 2025 • Your Name • Hosted on GitHub Pages. Tutorial optimized for ~20–25 minutes with narration, media, and interactivity.</p>
+  <p>© 2025 • Manthankumar Patel• Hosted on GitHub Pages</p>
 </footer>
 </main>
 <script src="script.js"></script>

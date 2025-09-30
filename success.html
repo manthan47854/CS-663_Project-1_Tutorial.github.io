@@ -33,25 +33,55 @@
     <div>
       <h3>Where it shines</h3>
       <ul>
-        <li>Controlled training footage (stable camera, single athlete).</li>
-        <li>On‑device feedback for drills (sprint starts, squats).</li>
-        <li>Sport‑specific priors help instantaneous actions (e.g., pitching).</li>
+        <li><strong>Controlled sessions:</strong> fixed tripod or wall mount, single athlete centered, consistent backdrop, known capture zone (tape box on floor), and minimal bystanders.</li>
+        <li><strong>Repeatable drills:</strong> clear start/end (sprint starts, squats, CMJ, depth jumps, medicine-ball throws); scripted sets &amp; reps for easy segmentation.</li>
+        <li><strong>Short, explosive actions:</strong> tasks with strong sport-specific priors (pitching, serves, golf swings, Olympic lifts) that benefit from temporal templates.</li>
+        <li><strong>On-device feedback loops:</strong> instant rep counts, ROM/angle checks, depth/hit detection, cadence/tempo, asymmetry flags; audio/visual cues within &lt;100 ms perceived latency.</li>
+        <li><strong>Predictable environments:</strong> indoor gyms, cages, labs; static lighting; uncluttered backgrounds or solid backdrops that improve foreground separation.</li>
+        <li><strong>High-quality capture:</strong> fast shutter and higher frame rates when available (60–240 fps); fixed exposure &amp; white balance; low compression.</li>
+        <li><strong>Simple kinematics planes:</strong> sagittal or frontal-plane motions where 2D keypoints map well to coaching cues without full 3D reconstruction.</li>
+        <li><strong>Lightweight edge models:</strong> quantized runtimes on phones, tablets, or small edge boxes for low-latency inference and privacy-preserving workflows.</li>
+        <li><strong>Wearable/IMU fusion:</strong> combining a single phone/camera with wrist/waist IMUs to stabilize yaw/roll and enrich phase detection.</li>
+        <li><strong>Pre-session calibration:</strong> checkerboard or ArUco quick-check; known distances/heights; floor markers to bound athlete distance (2–6 m sweet spot).</li>
+        <li><strong>Apparel &amp; contrast:</strong> fitted, high-contrast clothing (no baggy layers); shoes distinct from flooring; optional lightweight markers/tape for key joints.</li>
+        <li><strong>Coaching stations:</strong> combines, team warm-ups, youth clinics; repeated stations with identical camera geometry boost accuracy and comparability.</li>
+        <li><strong>Rehab &amp; return-to-play:</strong> baseline snapshots, weekly deltas, side-by-side video overlays, and auto-generated session summaries.</li>
+        <li><strong>Offline batching:</strong> real-time cues during drills with richer summaries post-session (aggregate best reps, variability, trend charts).</li>
+        <li><strong>Data stewardship:</strong> on-device processing with optional anonymization (face blur, jersey blur) to satisfy privacy expectations without cloud upload.</li>
       </ul>
     </div>
+
     <div>
-      <h3>Failure modes & Mitigations</h3>
+      <h3>Failure modes &amp; mitigations</h3>
       <ul>
-        <li><strong>Occlusion/crowding:</strong> elevated camera; widen FOV; bottom‑up models.</li>
-        <li><strong>Rapid rotations:</strong> IMU fusion; faster shutter; multi‑view.</li>
-        <li><strong>Blur/lighting:</strong> fast shutter + lighting; avoid auto‑exposure hunting.</li>
-        <li><strong>Sync drift:</strong> clap/LED resync; log NTP offsets.</li>
+        <li><strong>Occlusion/crowding:</strong> elevate camera; widen FOV; floor lanes; stagger athletes; use bottom-up multi-person models with soft-NMS; enable ID re-association.</li>
+        <li><strong>Rapid rotations/spin:</strong> fuse IMU gyros; shorten exposure (~1/1000s if possible); multi-view capture for disambiguation; gyro-stabilized or fixed mounts.</li>
+        <li><strong>Blur/lighting:</strong> add continuous lighting; lock exposure/WB; avoid LED flicker (choose flicker-free 100/120 Hz fixtures); prevent auto-exposure hunting; mild denoise in post.</li>
+        <li><strong>Sync drift (video↔IMU/multi-cam):</strong> periodic clap/LED sync; log NTP offsets; prefer hardware genlock/time-code when available; record per-device timebase.</li>
+        <li><strong>Scale/distance changes:</strong> keep athlete within 2–6 m; prefer primes over heavy zoom; auto-recentering and dynamic crop; re-estimate focal length if zoom changes.</li>
+        <li><strong>Frame drops/overheating:</strong> cap to 1080p@60–120 fps; enable hardware acceleration; wired power; local storage (not Wi-Fi streams); monitor thermals.</li>
+        <li><strong>Domain shift (drills→games):</strong> augment with clutter/occlusions; venue-specific fine-tuning; confidence gating &amp; fallback heuristics; flag “out-of-distribution” frames.</li>
+        <li><strong>Reflective/complex backgrounds:</strong> portable backdrop/scrim; polarizing filter for glare; background blur/subtraction; avoid mirrors/windows behind subject.</li>
+        <li><strong>Calibration drift:</strong> quick daily check (2–3 poses or a checkerboard); store per-lens distortion profiles; re-run any time the mount moves.</li>
+        <li><strong>Edge-of-frame truncation:</strong> enforce safe margins; visual reticle to keep head/feet inside ROI; auto-pan recenter prompts.</li>
+        <li><strong>Rolling-shutter wobble:</strong> prefer global-shutter cams where possible; raise shutter speed; avoid aggressive electronic stabilization that warps geometry.</li>
+        <li><strong>Apparel pitfalls:</strong> loose clothing, long jerseys, or matching floor colors hide joints—encourage contrasty fitted gear; optional joint tape/markers for bootstrapping.</li>
+        <li><strong>Adverse weather/particulates:</strong> rain/snow/dust on lens; use hood/hydrophobic coat; wipe checks; relocate under cover; raise ISO with care to control noise.</li>
+        <li><strong>Motion aliasing (low fps):</strong> below ~60 fps, very fast limbs strobe; increase fps or infer sub-frame motion via optical flow; warn when capture is insufficient.</li>
+        <li><strong>Small, fast objects (balls/bats):</strong> high-speed camera for impact events; predictive tracking; fuse with radar/IMU when precision on contact timing matters.</li>
+        <li><strong>Multi-athlete ID swaps:</strong> persistent tracklets with appearance embeddings; jersey/bib color tags; assign lanes; lock ID to ROI when possible.</li>
+        <li><strong>Camera tilt/level drift:</strong> bubble level during setup; draw horizon grid; auto-estimate ground plane and correct angles in software.</li>
+        <li><strong>Storage/power hiccups:</strong> preflight check (free space, write speed); high-endurance cards; rolling file segments to limit corruption; UPS or battery pack.</li>
+        <li><strong>Privacy/compliance:</strong> face/jersey blur in-app; opt-in consents; on-device only by default; minimal metadata retention; coach-controlled export.</li>
       </ul>
     </div>
   </div>
 </section>
 
+
 <footer>
-  <p>© 2025 • Your Name • Hosted on GitHub Pages. Tutorial optimized for ~20–25 minutes with narration, media, and interactivity.</p>
+
+ <p>© 2025 • Manthankumar Patel• Hosted on GitHub Pages</p>
 </footer>
 </main>
 <script src="script.js"></script>
