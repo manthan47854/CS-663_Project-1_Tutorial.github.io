@@ -1,3 +1,41 @@
+/*
+  Sports Pose Tutorial — script.js (complete)
+  - Markerless skeleton overlay for images, webcam, and uploaded video
+  - MoveNet via @tensorflow-models/pose-detection
+  - Includes UI helpers, metrics, feedback, and simple quiz grading
+*/
+
+// ===== SHARED UTILITIES =====
+
+// Speech synthesis for narration (single definition)
+function speak(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  const text = el.textContent?.trim() || '';
+  if (!('speechSynthesis' in window)) {
+    alert('Speech not supported on this browser.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1.05;
+  u.pitch = 1.0;
+  u.lang = 'en-US';
+  speechSynthesis.speak(u);
+}
+
+// Quiz grading
+const answers = { q1: 'b', q2: 'b', q3: 'b', q4: 'a', q5: 'b' };
+function grade() {
+  let s = 0;
+  for (const k in answers) {
+    const v = document.querySelector('input[name="' + k + '"]:checked');
+    if (v && v.value === answers[k]) s++;
+  }
+  const el = document.getElementById('score');
+  if (el) el.textContent = s + '/5';
+}
+
 // ====== GLOBAL STATE & CONFIG ======
 const sportConfigs = {
   golf: {
@@ -93,28 +131,19 @@ let _lastFB = 0;
 // ====== DOM HELPERS ======
 function $(sel){ return document.querySelector(sel); }
 
-function speak(selector) {
-  const el = document.querySelector(selector);
-  if (!el) return;
-  const text = el.textContent.trim();
-  const u = new SpeechSynthesisUtterance(text);
-  u.rate = 1.0; u.pitch = 1.0; u.lang = 'en-US';
-  speechSynthesis.speak(u);
-}
-
-function metricId(label) {
-  return 'metric_' + label.replace(/\s/g, '_');
-}
+function metricId(label) { return 'metric_' + label.replace(/\s/g, '_'); }
 function updateMetric(label, value) {
   const el = document.getElementById(metricId(label));
   if (el) el.textContent = value;
 }
 function clearFeedback() {
   const list = document.getElementById('feedbackList');
+  if (!list) return;
   list.innerHTML = '<div style="color:#9aa4b2; font-size:12px">Waiting for motion...</div>';
 }
 function addFeedback(type, message) {
   const list = document.getElementById('feedbackList');
+  if (!list) return;
   if (list.querySelector('[style*="color:#9aa4b2"]')) list.innerHTML = '';
   const alert = document.createElement('div');
   alert.className = `feedback-alert feedback-${type}`;
@@ -153,13 +182,15 @@ function playSound(type) {
 
 function toggleSound() {
   soundEnabled = !soundEnabled;
-  document.getElementById('soundStatus').textContent = soundEnabled ? 'ON' : 'OFF';
+  const el = document.getElementById('soundStatus');
+  if (el) el.textContent = soundEnabled ? 'ON' : 'OFF';
 }
 
 // ====== METRICS UI ======
 function updateMetricsDisplay() {
   const config = sportConfigs[currentSport];
   const display = document.getElementById('metricsDisplay');
+  if (!display) return;
   display.innerHTML = config.metrics.map(m => `
     <div class="metric-card">
       <div class="metric-label">${m}</div>
@@ -172,8 +203,10 @@ function resetMetrics() {
   repCount = 0;
   repState = 'ready';
   phaseHistory = [];
-  document.getElementById('repCount').textContent = '0';
-  document.getElementById('overallScore').textContent = '--';
+  const rc = document.getElementById('repCount');
+  if (rc) rc.textContent = '0';
+  const os = document.getElementById('overallScore');
+  if (os) os.textContent = '--';
   clearFeedback();
   updateMetricsDisplay();
 }
@@ -184,8 +217,9 @@ function setSport(sport, el) {
   if (el) el.classList.add('active');
   const config = sportConfigs[sport];
   const infoBox = document.getElementById('sportInfo');
-  infoBox.innerHTML = `<h4>${config.info.title}</h4><ul>${config.info.points.map(p => `<li>${p}</li>`).join('')}</ul>`;
-  document.getElementById('techniqueTips').textContent = config.tips;
+  if (infoBox) infoBox.innerHTML = `<h4>${config.info.title}</h4><ul>${config.info.points.map(p => `<li>${p}</li>`).join('')}</ul>`;
+  const tips = document.getElementById('techniqueTips');
+  if (tips) tips.textContent = config.tips;
   updateMetricsDisplay();
   resetMetrics();
 }
@@ -196,7 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (active) setSport('golf', active);
 });
 
-// ====== GEOMETRY & DRAWING ======
+// ===== POSE ESTIMATION UTILITIES =====
+
 function angleDeg(a, b, c) {
   const abx = a.x - b.x, aby = a.y - b.y;
   const cbx = c.x - b.x, cby = c.y - b.y;
@@ -206,7 +241,7 @@ function angleDeg(a, b, c) {
   return Math.acos(Math.max(-1, Math.min(1, dot / (mab * mcb + 1e-9)))) * 180 / Math.PI;
 }
 
-function drawSkeleton(ctx, kps, flip = false) {
+function drawSkeleton(ctx, kps) {
   const edges = [
     ['left_shoulder', 'left_elbow'], ['left_elbow', 'left_wrist'],
     ['right_shoulder', 'right_elbow'], ['right_elbow', 'right_wrist'],
@@ -215,27 +250,21 @@ function drawSkeleton(ctx, kps, flip = false) {
     ['left_shoulder', 'right_shoulder'], ['left_hip', 'right_hip'],
     ['left_shoulder', 'left_hip'], ['right_shoulder', 'right_hip']
   ];
-
-  function get(name) {
-    return kps.find(k => k.name === name) || { x: 0, y: 0, score: 0 };
-  }
-
+  function get(name) { return kps.find(k => k.name === name) || { x: 0, y: 0, score: 0 }; }
   ctx.lineWidth = 3;
   ctx.strokeStyle = '#7c5cff';
   ctx.fillStyle = '#19c6ff';
-
   edges.forEach(([a, b]) => {
     const A = get(a), B = get(b);
-    if (A.score > 0.3 && B.score > 0.3) {
+    if ((A.score ?? 0) > 0.3 && (B.score ?? 0) > 0.3) {
       ctx.beginPath();
       ctx.moveTo(A.x, A.y);
       ctx.lineTo(B.x, B.y);
       ctx.stroke();
     }
   });
-
   kps.forEach(k => {
-    if (k.score > 0.3) {
+    if ((k.score ?? 0) > 0.3) {
       ctx.beginPath();
       ctx.arc(k.x, k.y, 5, 0, Math.PI * 2);
       ctx.fill();
@@ -243,30 +272,74 @@ function drawSkeleton(ctx, kps, flip = false) {
   });
 }
 
-// ====== SYNTHETIC KEYPOINTS (demo without ML) ======
-function synthKeypoints(w, h, t) {
-  // Centered stick figure that wiggles smoothly
-  const cx = w * 0.5;
-  const cy = h * 0.55;
-  const s = Math.min(w, h) * 0.22;
-  const wob = Math.sin(t * 1.3) * 0.08;
-  const up = Math.sin(t * 0.9) * 0.06;
-  function P(x,y){ return {x: cx + x*s, y: cy + y*s, score: 0.9}; }
-  const pts = {
-    left_shoulder:  P(-0.35 + wob, -0.8 + up),
-    right_shoulder: P( 0.35 + wob, -0.8 + up),
-    left_elbow:     P(-0.55, -0.5 + up),
-    right_elbow:    P( 0.55, -0.5 + up),
-    left_wrist:     P(-0.7, -0.25 + up),
-    right_wrist:    P( 0.7, -0.25 + up),
-    left_hip:       P(-0.2, -0.2 + up*0.5),
-    right_hip:      P( 0.2, -0.2 + up*0.5),
-    left_knee:      P(-0.2 - 0.05*Math.sin(t), 0.3 + 0.05*Math.sin(t*1.2)),
-    right_knee:     P( 0.2 + 0.05*Math.cos(t), 0.3 + 0.05*Math.cos(t*1.2)),
-    left_ankle:     P(-0.2, 0.8),
-    right_ankle:    P( 0.2, 0.8)
+function mapKeypointsToCanvas(kps, srcW, srcH, dstW, dstH) {
+  const sx = dstW / (srcW || 1);
+  const sy = dstH / (srcH || 1);
+  return kps.map(k => ({
+    ...k,
+    x: k.x * sx,
+    y: k.y * sy,
+    score: (k.score == null ? 1 : k.score)
+  }));
+}
+
+// ===== MODEL LOADING =====
+
+async function ensurePoseLibs() {
+  if (window._poseDetector) return;
+  await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js');
+  await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection');
+  window._poseDetector = await poseDetection.createDetector(
+    poseDetection.SupportedModels.MoveNet,
+    { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+  );
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.body.appendChild(s);
+  });
+}
+
+// ===== IMAGE ANALYSIS (for metrics.html) =====
+
+async function runPoseOnImage(imgEl, canvasEl) {
+  await ensurePoseLibs();
+  const detector = window._poseDetector;
+  const poses = await detector.estimatePoses(imgEl, { maxPoses: 1, flipHorizontal: false });
+  if (!poses[0]) return;
+
+  const kps = poses[0].keypoints;
+  const ctx = canvasEl.getContext('2d');
+  canvasEl.width = imgEl.naturalWidth;
+  canvasEl.height = imgEl.naturalHeight;
+  drawSkeleton(ctx, kps);
+
+  const get = n => kps.find(k => k.name === n);
+  const L = angleDeg(get('left_hip'), get('left_knee'), get('left_ankle'));
+  const R = angleDeg(get('right_hip'), get('right_knee'), get('right_ankle'));
+  const asym = 100 * Math.abs(L - R) / (0.5 * (L + R) + 1e-3);
+
+  const out = imgEl.closest('.tile')?.querySelector('.kpi');
+  if (out) {
+    out.innerHTML = `<span class="tag">Left knee: ${L.toFixed(1)}°</span><span class="tag">Right knee: ${R.toFixed(1)}°</span><span class="tag">Asym: ${asym.toFixed(1)}%</span>`;
+  }
+}
+
+function handleImageUpload(e, imgId, canvasId) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById(imgId);
+  img.onload = () => {
+    const canvas = document.getElementById(canvasId);
+    runPoseOnImage(img, canvas);
   };
-  return Object.entries(pts).map(([name, p]) => ({ name, ...p }));
+  img.src = url;
 }
 
 // ====== ANALYSIS ======
@@ -351,108 +424,81 @@ function analyzePose(kps) {
 
   // Session score (very rough demo)
   const score = Math.max(10, Math.min(98, 100 - Math.abs(10 - (180 - L)) - asymPct * 0.2));
-  document.getElementById('overallScore').textContent = Math.round(score);
+  const os = document.getElementById('overallScore');
+  if (os) os.textContent = Math.round(score);
 }
 
-// ====== WEBCAM LOOP ======
+// ===== WEBCAM DEMO =====
+
 async function startWebcamDemo() {
+  await ensurePoseLibs();
+  const video = document.getElementById('cam');
+  const canvas = document.getElementById('overlay');
+  const lk = document.getElementById('lk');
+  const rk = document.getElementById('rk');
+  const asym = document.getElementById('asym');
+  const ctx = canvas.getContext('2d');
+
   try {
-    if (activeStream) return;
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+    video.srcObject = stream;
     activeStream = stream;
-    const vid = document.getElementById('cam');
-    vid.srcObject = stream;
-    await vid.play();
-    sessionStartTime = Date.now();
-    loop();
-  } catch (e) {
-    addFeedback('error', 'Camera access denied or unavailable');
-    console.error(e);
+    await new Promise(r => video.onloadedmetadata = r);
+
+    (async function loop() {
+      const poses = await window._poseDetector.estimatePoses(video, {
+        maxPoses: 1,
+        flipHorizontal: true
+      });
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (poses[0]) {
+        const kps = poses[0].keypoints;
+        drawSkeleton(ctx, kps);
+        const get = n => kps.find(k => k.name === n);
+        const L = angleDeg(get('left_hip'), get('left_knee'), get('left_ankle'));
+        const R = angleDeg(get('right_hip'), get('right_knee'), get('right_ankle'));
+
+        if (isFinite(L) && isFinite(R)) {
+          if (lk) lk.textContent = L.toFixed(1);
+          if (rk) rk.textContent = R.toFixed(1);
+          if (asym) asym.textContent = (Math.abs(L - R) / (0.5 * (L + R) + 1e-3) * 100).toFixed(1) + '%';
+          analyzePose(kps);
+        }
+      }
+      animationId = requestAnimationFrame(loop);
+    })();
+  } catch (err) {
+    alert('Camera access denied or unavailable: ' + err.message);
   }
 }
 
-function stopWebcam() {
-  if (animationId) cancelAnimationFrame(animationId);
-  animationId = null;
-  const vid = document.getElementById('cam');
-  const cvs = document.getElementById('overlay');
-  const ctx = cvs.getContext('2d');
-  ctx.clearRect(0,0,cvs.width,cvs.height);
-  if (activeStream) {
-    activeStream.getTracks().forEach(t => t.stop());
-    activeStream = null;
-  }
-}
-
-function loop() {
-  const vid = document.getElementById('cam');
-  const cvs = document.getElementById('overlay');
-  const ctx = cvs.getContext('2d');
-  // Resize canvas to element pixel size
-  const rect = cvs.getBoundingClientRect();
-  cvs.width = rect.width * devicePixelRatio;
-  cvs.height = rect.height * devicePixelRatio;
-  ctx.clearRect(0,0,cvs.width,cvs.height);
-
-  // draw video frame behind (already in <video>) — we just draw overlay
-  const t = performance.now() / 1000;
-  const kps = synthKeypoints(cvs.width, cvs.height, t);
-  drawSkeleton(ctx, kps);
-  analyzePose(kps);
-
-  // update session time
-  const sec = Math.floor((Date.now() - sessionStartTime)/1000);
-  const mm = String(Math.floor(sec/60));
-  const ss = String(sec%60).padStart(2,'0');
-  document.getElementById('sessionTime').textContent = `${mm}:${ss}`;
-
-  animationId = requestAnimationFrame(loop);
-}
-
-// ====== UPLOAD VIDEO HANDLERS ======
+// ===== VIDEO UPLOAD & ANALYSIS (markerless skeleton) =====
 
 let uploadLoopRAF = null;
 let uploadRVFC = null;
+let uploadRunning = false;
+let uploadPending = false;
 
-function startUploadOverlayLoop() {
-  const vid = document.getElementById('upVideo');
-  const cvs = document.getElementById('upCanvas');
-  const ctx = cvs.getContext('2d');
-
-  // Resize canvas to match element on each frame (keeps sharp on resize/zoom)
-  const render = () => {
-    const rect = cvs.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const w = Math.max(1, Math.floor(rect.width * dpr));
-    const h = Math.max(1, Math.floor(rect.height * dpr));
-    if (cvs.width !== w || cvs.height !== h) {
-      cvs.width = w; cvs.height = h;
-    }
-    ctx.clearRect(0,0,w,h);
-    const kps = synthKeypoints(w, h, vid.currentTime || performance.now()/1000);
-    drawSkeleton(ctx, kps);
-  };
-
-  // Prefer requestVideoFrameCallback if present (Safari/Chrome support)
-  if (typeof vid.requestVideoFrameCallback === 'function') {
-    const step = () => {
-      render();
-      uploadRVFC = vid.requestVideoFrameCallback(step);
-    };
-    cancelUploadOverlayLoop();
-    uploadRVFC = vid.requestVideoFrameCallback(step);
-  } else {
-    const step = () => {
-      render();
-      uploadLoopRAF = requestAnimationFrame(step);
-    };
-    cancelUploadOverlayLoop();
-    uploadLoopRAF = requestAnimationFrame(step);
-  }
+function setUploadStatus(msg) {
+  const el = document.getElementById('uploadStatus');
+  if (el) el.textContent = msg;
 }
 
 function cancelUploadOverlayLoop() {
   const vid = document.getElementById('upVideo');
+  const cvs = document.getElementById('upCanvas');
+  // Click anywhere on the video/canvas to analyze that moment
+  const onMomentClick = () => analyzeCurrentMoment();
+  if (cvs) cvs.onclick = onMomentClick;
+  if (vid) vid.onclick = onMomentClick;
+  uploadRunning = false;
+  uploadPending = false;
   if (vid && typeof vid.cancelVideoFrameCallback === 'function' && uploadRVFC) {
     vid.cancelVideoFrameCallback(uploadRVFC);
   }
@@ -460,9 +506,102 @@ function cancelUploadOverlayLoop() {
   uploadRVFC = null; uploadLoopRAF = null;
 }
 
-function setUploadStatus(msg) {
-  const el = document.getElementById('uploadStatus');
-  if (el) el.textContent = msg;
+async function startUploadOverlayLoop() {
+  const vid = document.getElementById('upVideo');
+  const cvs = document.getElementById('upCanvas');
+  const ctx = cvs.getContext('2d');
+
+  await ensurePoseLibs();
+  cancelUploadOverlayLoop();
+  uploadRunning = true;
+
+  const renderOnce = async () => {
+    if (!uploadRunning || !vid || vid.readyState < 2) return;
+
+    // Match canvas backing store to CSS size × DPR
+    const rect = cvs.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const W = Math.max(1, Math.floor(rect.width * dpr));
+    const H = Math.max(1, Math.floor(rect.height * dpr));
+    if (cvs.width !== W || cvs.height !== H) { cvs.width = W; cvs.height = H; }
+
+    ctx.clearRect(0, 0, W, H);
+
+    try {
+      const poses = await window._poseDetector.estimatePoses(vid, { maxPoses: 1, flipHorizontal: false });
+      if (poses[0]) {
+        const mapped = mapKeypointsToCanvas(poses[0].keypoints, vid.videoWidth, vid.videoHeight, W, H);
+        drawSkeleton(ctx, mapped);
+        analyzePose(mapped);
+      }
+    } catch (_) { /* ignore per-frame errors */ }
+  };
+
+  if (typeof vid.requestVideoFrameCallback === 'function') {
+    const step = async () => {
+      if (!uploadRunning) return;
+      if (uploadPending) { uploadRVFC = vid.requestVideoFrameCallback(step); return; }
+      uploadPending = true;
+      await renderOnce();
+      uploadPending = false;
+      uploadRVFC = vid.requestVideoFrameCallback(step);
+    };
+    uploadRVFC = vid.requestVideoFrameCallback(step);
+  } else {
+    const step = async () => {
+      if (!uploadRunning) return;
+      await renderOnce();
+      uploadLoopRAF = requestAnimationFrame(step);
+    };
+    uploadLoopRAF = requestAnimationFrame(step);
+  }
+}
+
+async function drawUploadOverlay() {
+  const vid = document.getElementById('upVideo');
+  const cvs = document.getElementById('upCanvas');
+  const ctx = cvs.getContext('2d');
+
+  await ensurePoseLibs();
+
+  const rect = cvs.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.max(1, Math.floor(rect.width * dpr));
+  const H = Math.max(1, Math.floor(rect.height * dpr));
+  if (cvs.width !== W || cvs.height !== H) { cvs.width = W; cvs.height = H; }
+
+  ctx.clearRect(0, 0, W, H);
+
+  try {
+    const poses = await window._poseDetector.estimatePoses(vid, { maxPoses: 1, flipHorizontal: false });
+    const out = document.getElementById('videoFeedback');
+    if (poses[0]) {
+      const mapped = mapKeypointsToCanvas(poses[0].keypoints, vid.videoWidth, vid.videoHeight, W, H);
+      drawSkeleton(ctx, mapped);
+      analyzePose(mapped);
+      // Moment readout for the paused/clicked frame
+      const get = n => mapped.find(k => k.name === n);
+      const L = angleDeg(get('left_hip'), get('left_knee'), get('left_ankle'));
+      const R = angleDeg(get('right_hip'), get('right_knee'), get('right_ankle'));
+      const asym = Math.abs(L - R);
+      if (out) out.textContent = `t=${(vid.currentTime||0).toFixed(2)}s — L=${L.toFixed(1)}°, R=${R.toFixed(1)}° • Asym=${asym.toFixed(1)}°`;
+    } else {
+      const out = document.getElementById('videoFeedback');
+      if (out) out.textContent = `t=${(vid.currentTime||0).toFixed(2)}s — No person detected.`;
+    }
+  } catch (_) {
+    // ignore per-frame errors
+  }
+}
+
+async function analyzeCurrentMoment() {
+  // Pause (if playing) and analyze the exact displayed frame
+  const vid = document.getElementById('upVideo');
+  if (!vid) return;
+  vid.pause();
+  cancelUploadOverlayLoop();
+  await drawUploadOverlay();
+  setUploadStatus(`Analyzed @ ${(vid.currentTime||0).toFixed(2)}s`);
 }
 
 function handleVideoUpload(e) {
@@ -470,11 +609,13 @@ function handleVideoUpload(e) {
   if (!f) return;
   const url = URL.createObjectURL(f);
   const vid = document.getElementById('upVideo');
-  const cvs = document.getElementById('upCanvas');
+
+  cancelUploadOverlayLoop();
+
   vid.src = url;
   vid.load();
 
-  // Clear previous listeners
+  // Clear previous listeners (if any)
   vid.onloadedmetadata = null;
   vid.onplay = null;
   vid.onpause = null;
@@ -484,9 +625,9 @@ function handleVideoUpload(e) {
   vid.onwaiting = null;
   vid.ontimeupdate = null;
 
-  vid.addEventListener('loadedmetadata', () => {
+  vid.addEventListener('loadedmetadata', async () => {
     setUploadStatus(`Loaded: ${Math.round(vid.duration)}s • ${vid.videoWidth}×${vid.videoHeight}`);
-    drawUploadOverlay();
+    await drawUploadOverlay();
   }, { once: true });
 
   vid.addEventListener('play', () => {
@@ -518,30 +659,32 @@ function handleVideoUpload(e) {
   // Try to play (user gesture from file picker usually allows it)
   vid.play().catch(() => { setUploadStatus('Ready — click Play'); });
 }
-function drawUploadOverlay() {
+
+function analyzeVideoFrame() {
+  // One-off analysis from the current uploaded video frame (uses real pose)
+  const out = document.getElementById('videoFeedback');
   const vid = document.getElementById('upVideo');
   const cvs = document.getElementById('upCanvas');
   const ctx = cvs.getContext('2d');
-  const rect = cvs.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  const w = Math.max(1, Math.floor(rect.width * dpr));
-  const h = Math.max(1, Math.floor(rect.height * dpr));
-  if (cvs.width !== w || cvs.height !== h) { cvs.width = w; cvs.height = h; }
-  ctx.clearRect(0,0,w,h);
-  // Use ONLY the video's currentTime so pausing truly freezes the overlay
-  const t = isFinite(vid.currentTime) ? vid.currentTime : 0;
-  const kps = synthKeypoints(w, h, t);
-  drawSkeleton(ctx, kps);
-}
-
-function analyzeVideoFrame() {
-  const out = document.getElementById('videoFeedback');
-  const kps = synthKeypoints(640, 480, performance.now()/1000);
-  const get = n => kps.find(k => k.name === n);
-  const L = angleDeg(get('left_hip'), get('left_knee'), get('left_ankle'));
-  const R = angleDeg(get('right_hip'), get('right_knee'), get('right_ankle'));
-  const asym = Math.abs(L-R);
-  out.innerHTML = `Estimated knee angles: L=${L.toFixed(1)}°, R=${R.toFixed(1)}° • Asym=${asym.toFixed(1)}°`;
+  if (!vid || !cvs) return;
+  (async () => {
+    await ensurePoseLibs();
+    const rect = cvs.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const W = Math.max(1, Math.floor(rect.width * dpr));
+    const H = Math.max(1, Math.floor(rect.height * dpr));
+    cvs.width = W; cvs.height = H;
+    ctx.clearRect(0,0,W,H);
+    const poses = await window._poseDetector.estimatePoses(vid, { maxPoses: 1, flipHorizontal: false });
+    if (!poses[0]) { if (out) out.textContent = 'No person detected.'; return; }
+    const mapped = mapKeypointsToCanvas(poses[0].keypoints, vid.videoWidth, vid.videoHeight, W, H);
+    drawSkeleton(ctx, mapped);
+    const get = n => mapped.find(k => k.name === n);
+    const L = angleDeg(get('left_hip'), get('left_knee'), get('left_ankle'));
+    const R = angleDeg(get('right_hip'), get('right_knee'), get('right_ankle'));
+    const asym = Math.abs(L - R);
+    if (out) out.textContent = `Estimated knee angles: L=${L.toFixed(1)}°, R=${R.toFixed(1)}° • Asym=${asym.toFixed(1)}°`;
+  })();
 }
 
 function generateReport() {
@@ -567,21 +710,28 @@ function generateReport() {
   const metrics = [
     ['X-Factor', '42°'], ['Forward Lean', '7.5°'], ['Symmetry', '92%'], ['Cadence', '—']
   ];
-  document.getElementById('strengths').innerHTML = '<ul>' + strengths.map(s => `<li>${s}</li>`).join('') + '</ul>';
-  document.getElementById('improvements').innerHTML = '<ul>' + improvements.map(s => `<li>${s}</li>`).join('') + '</ul>';
-  document.getElementById('coachingCues').innerHTML = '<ul>' + cues.map(s => `<li>${s}</li>`).join('') + '</ul>';
-  document.getElementById('injuryRisks').innerHTML = '<ul>' + risks.map(s => `<li>${s}</li>`).join('') + '</ul>';
-  document.getElementById('metricsSummary').innerHTML = metrics.map(([k,v]) => `
+  const sEl = document.getElementById('strengths');
+  const iEl = document.getElementById('improvements');
+  const cEl = document.getElementById('coachingCues');
+  const rEl = document.getElementById('injuryRisks');
+  const mEl = document.getElementById('metricsSummary');
+  if (sEl) sEl.innerHTML = '<ul>' + strengths.map(s => `<li>${s}</li>`).join('') + '</ul>';
+  if (iEl) iEl.innerHTML = '<ul>' + improvements.map(s => `<li>${s}</li>`).join('') + '</ul>';
+  if (cEl) cEl.innerHTML = '<ul>' + cues.map(s => `<li>${s}</li>`).join('') + '</ul>';
+  if (rEl) rEl.innerHTML = '<ul>' + risks.map(s => `<li>${s}</li>`).join('') + '</ul>';
+  if (mEl) mEl.innerHTML = metrics.map(([k,v]) => `
     <div class="metric-card"><div class="metric-label">${k}</div><div class="metric-value">${v}</div></div>`
   ).join('');
-  document.getElementById('analysisReport').style.display = 'block';
-  document.getElementById('videoFeedback').textContent = 'Generated a summary report for this session.';
+  const rep = document.getElementById('analysisReport');
+  const vf = document.getElementById('videoFeedback');
+  if (rep) rep.style.display = 'block';
+  if (vf) vf.textContent = 'Generated a summary report for this session.';
 }
 
 function compareFrames() {
-  document.getElementById('videoFeedback').textContent = 'Frame comparison demo: capture two timestamps and compare knee angles & symmetry (placeholder).';
+  const vf = document.getElementById('videoFeedback');
+  if (vf) vf.textContent = 'Frame comparison demo: capture two timestamps and compare knee angles & symmetry (placeholder).';
 }
-
 
 function pauseUpload() {
   const vid = document.getElementById('upVideo');
