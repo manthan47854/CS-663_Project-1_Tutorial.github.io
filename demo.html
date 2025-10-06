@@ -1,14 +1,156 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Demo — Sports Pose Tutorial</title>
-  <meta name="description" content="Live demo MoveNet" />
+  <title>Demo – Sports Pose Tutorial</title>
+  <meta name="description" content="Multi-sport pose analysis with real-time feedback" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; color: #e8eef8; background: #0b1220; }
+    .nav { display:flex; gap:14px; align-items:center; padding:12px 16px; background: rgba(255,255,255,.02); border-bottom:1px solid rgba(255,255,255,.08); position:sticky; top:0; backdrop-filter: blur(8px); z-index:10; }
+    .nav a { color:#9fb3d9; text-decoration:none; font-size:14px; }
+    .logo { font-weight: 700; margin-right:auto; }
+    main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+    .h { font-size: 28px; margin: 10px 0; }
+    .p { color:#b8c2d3; }
+    .card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; }
+    .grid.two { display:grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 900px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .video-wrap video, .video-wrap canvas {
+      pointer-events: none; /* allow clicks to go to the video controls */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .sport-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .sport-card {
+      padding: 14px;
+      background: rgba(124,92,255,.08);
+      border: 2px solid rgba(124,92,255,.2);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .sport-card:hover {
+      background: rgba(124,92,255,.15);
+      border-color: rgba(124,92,255,.4);
+      transform: translateY(-2px);
+    }
+    .sport-card.active {
+      background: rgba(124,92,255,.25);
+      border-color: #7c5cff;
+      box-shadow: 0 4px 12px rgba(124,92,255,.3);
+    }
+    .sport-icon {
+      font-size: 32px;
+      margin-bottom: 6px;
+    }
+    .sport-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #dfe7f3;
+    }
+    .feedback-panel {
+      margin-top: 12px;
+      padding: 14px;
+      background: linear-gradient(135deg, rgba(124,92,255,.15), rgba(25,198,255,.15));
+      border: 1px solid rgba(124,92,255,.3);
+      border-radius: 12px;
+      min-height: 120px;
+    }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .metric-card {
+      background: rgba(0,0,0,.3);
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .metric-label {
+      font-size: 10px;
+      color: #9aa4b2;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .metric-value {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 4px 0;
+      background: linear-gradient(90deg, #7c5cff, #19c6ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .feedback-alert {
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin: 6px 0;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .feedback-good { background: rgba(39, 174, 96, .2); border: 1px solid rgba(39, 174, 96, .5); color: #27ae60; }
+    .feedback-warning { background: rgba(243, 156, 18, .2); border: 1px solid rgba(243, 156, 18, .5); color: #f39c12; }
+    .feedback-error { background: rgba(231, 76, 60, .2); border: 1px solid rgba(231, 76, 60, .5); color: #e74c3c; }
+    .control-panel {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .btn { background:#14203b; color:#dfe7f3; border:1px solid rgba(255,255,255,.12); padding:10px 14px; border-radius:10px; cursor:pointer; }
+    .btn-small { padding: 6px 12px; font-size: 13px; }
+    .info-box {
+      background: rgba(25,198,255,.1);
+      border: 1px solid rgba(25,198,255,.3);
+      border-radius: 10px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .info-box h4 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #19c6ff;
+    }
+    .info-box ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+      .video-wrap canvas { pointer-events: none; }
+  </style>
 </head>
 <body>
 <header>
@@ -28,44 +170,310 @@
 <main>
 
 <section id="demo">
-  <h2 class="h">Real‑World Demo: Webcam + Local Video</h2>
-  <p class="p">Use your webcam for live skeleton overlay, or upload a local training video (MP4/MOV). Everything runs in your browser.</p>
- <div class="grid two">
-  <div class="card" style="padding:12px">
-    <h3>Webcam</h3>
+  <h2 class="h">Multi-Sport Pose Analysis Demo</h2>
+  <p class="p">Analyze technique across different sports using real-time pose estimation. Select your sport, perform the movement, and receive instant biomechanical feedback.</p>
 
-    <div class="video-wrap">
-      <video id="cam" autoplay playsinline></video>
-      <canvas id="overlay"></canvas>
+  <div class="audio-ctrl" style="margin-bottom:16px">
+    <button class="btn" onclick="speak('#demo-intro')">▶️ Play Page Narration</button>
+  </div>
+
+  <div id="demo-intro" style="display:none">
+    This demonstration showcases markerless pose estimation applied to multiple sports. You can analyze golf swings, sprint mechanics, cricket bowling, baseball pitching, and more. The system detects body keypoints in real-time and provides coaching feedback based on biomechanical principles specific to each sport.
+  </div>
+
+  <!-- Sport Selection -->
+  <div class="card" style="padding:16px; margin-bottom:16px">
+    <h3 style="margin-top:0">Select Sport</h3>
+    <div class="sport-selector">
+      <div class="sport-card active" onclick="setSport('golf', this)">
+        <div class="sport-icon">⛳</div>
+        <div class="sport-name">Golf Swing</div>
+      </div>
+      <div class="sport-card" onclick="setSport('sprint', this)">
+        <div class="sport-icon">🏃</div>
+        <div class="sport-name">Sprint</div>
+      </div>
+      <div class="sport-card" onclick="setSport('cricket', this)">
+        <div class="sport-icon">🏏</div>
+        <div class="sport-name">Cricket Bowl</div>
+      </div>
+      <div class="sport-card" onclick="setSport('baseball', this)">
+        <div class="sport-icon">⚾</div>
+        <div class="sport-name">Baseball Pitch</div>
+      </div>
+      <div class="sport-card" onclick="setSport('tennis', this)">
+        <div class="sport-icon">🎾</div>
+        <div class="sport-name">Tennis Serve</div>
+      </div>
+      <div class="sport-card" onclick="setSport('squat', this)">
+        <div class="sport-icon">🏋️</div>
+        <div class="sport-name">Squat</div>
+      </div>
     </div>
 
-    <div class="pill">
-      <span>L-Knee:</span> <span id="lk">–</span>°
-      <span style="margin-left:10px">R-Knee:</span> <span id="rk">–</span>°
-      <span style="margin-left:10px">Asym:</span> <span id="asym">–</span>
-    </div>
-
-    <div style="margin-top:8px">
-      <button class="btn" onclick="startWebcamDemo()">Start Webcam Demo</button>
+    <div class="info-box" id="sportInfo">
+      <h4>Golf Swing Analysis</h4>
+      <ul>
+        <li><strong>Key Angles:</strong> Hip rotation, shoulder turn, spine angle, knee flex</li>
+        <li><strong>Phases:</strong> Address → Backswing → Top → Downswing → Impact → Follow-through</li>
+        <li><strong>Focus:</strong> X-factor (shoulder-hip separation), weight transfer, swing plane</li>
+      </ul>
     </div>
   </div>
 
-  <div class="card" style="padding:12px">
-    <h3>Local Video Upload</h3>
-    <input type="file" accept="video/*" onchange="handleVideoUpload(event)" />
-    <div class="video-wrap" style="margin-top:8px">
-      <video id="upVideo" controls></video>
+  <div class="grid two">
+    <!-- Live Analysis -->
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">Live Camera Feed</h3>
+
+      <div class="video-wrap">
+        <video id="cam" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+      </div>
+
+      <div class="control-panel">
+        <button class="btn btn-small" onclick="startWebcamDemo()">▶ Start Camera</button>
+        <button class="btn btn-small" onclick="stopWebcam()">⏹ Stop</button>
+        <button class="btn btn-small" onclick="toggleSound()">🔊 <span id="soundStatus">ON</span></button>
+        <button class="btn btn-small" onclick="resetMetrics()">🔄 Reset</button>
+      </div>
+
+      <div id="uploadStatus" style="font-size:12px;color:#9aa4b2;margin:8px 0 0 2px"></div>
+
+    <div class="feedback-panel">
+        <h4 style="margin:0 0 8px; font-size:14px; color:#19c6ff">Real-Time Feedback</h4>
+        <div id="feedbackList">
+          <div style="color:#9aa4b2; font-size:12px">Start camera to begin analysis...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="card" style="padding:14px">
+      <h3 style="margin-top:0">Performance Metrics</h3>
+      
+      <div class="metrics-grid" id="metricsDisplay">
+        <!-- Dynamic metrics based on sport -->
+      </div>
+
+      <div style="margin-top:14px; padding:10px; background:rgba(124,92,255,.1); border-radius:8px">
+        <h4 style="margin:0 0 6px; font-size:13px">Session Stats</h4>
+        <div style="font-size:12px; color:#ced8e7">
+          <div>Reps Completed: <strong id="repCount">0</strong></div>
+          <div>Session Time: <strong id="sessionTime">0:00</strong></div>
+          <div>Form Score: <strong id="overallScore">--</strong>/100</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px; padding:10px; background:rgba(25,198,255,.08); border:1px solid rgba(25,198,255,.2); border-radius:8px">
+        <h4 style="margin:0 0 6px; font-size:12px; color:#19c6ff">TECHNIQUE TIPS</h4>
+        <div id="techniqueTips" style="font-size:11px; line-height:1.5; color:#b8c2d3">
+          Position yourself side-on to the camera for best results
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Upload Section -->
+  <div class="card" style="padding:16px; margin-top:16px">
+    <h3 style="margin-top:0">📹 Analyze Recorded Video</h3>
+    <p class="p">Upload training footage (MP4/MOV) for detailed frame-by-frame analysis with improvement suggestions.</p>
+    
+    <input type="file" accept="video/*" onchange="handleVideoUpload(event)" style="margin-bottom:12px" id="videoInput" />
+    
+    <div class="video-wrap">
+      <video id="upVideo" controls playsinline preload="metadata"></video>
       <canvas id="upCanvas"></canvas>
     </div>
-    <p class="p">Tip: crop to the athlete; keep 720p for smoother inference.</p>
+    
+    <div class="control-panel">
+      <button class="btn btn-small" onclick="analyzeVideoFrame()">🔍 Analyze Current Frame</button>
+      <button class="btn btn-small" onclick="generateReport()">📊 Generate Full Report</button>
+      <button class="btn btn-small" onclick="compareFrames()">⚖️ Compare Key Frames</button>
+      <button class="btn btn-small" onclick="pauseUpload()">⏸ Pause</button>
+      <button class="btn btn-small" onclick="playUpload()">▶ Play</button>
+      <button class="btn btn-small" onclick="stepUpload(-1)">⏮ Frame -1</button>
+      <button class="btn btn-small" onclick="stepUpload(1)">⏭ Frame +1</button>
+    </div>
+
+    <div id="uploadStatus" style="font-size:12px;color:#9aa4b2;margin:8px 0 0 2px"></div>
+
+    <div class="feedback-panel">
+      <h4 style="margin:0 0 8px; font-size:14px; color:#19c6ff">Video Analysis Results</h4>
+      <div id="videoFeedback" style="color:#9aa4b2; font-size:13px">Upload a video to see detailed analysis with angle measurements and phase detection</div>
+    </div>
+
+    <!-- Detailed Analysis Report -->
+    <div id="analysisReport" style="display:none; margin-top:14px">
+      <div class="card" style="padding:14px; background:rgba(0,0,0,.3)">
+        <h4 style="margin-top:0; color:#7c5cff">📋 Performance Report</h4>
+        
+        <div class="grid two" style="gap:12px">
+          <div>
+            <h5 style="font-size:13px; margin:8px 0; color:#19c6ff">Strengths</h5>
+            <div id="strengths" style="font-size:12px; line-height:1.6"></div>
+          </div>
+          <div>
+            <h5 style="font-size:13px; margin:8px 0; color:#f39c12">Areas for Improvement</h5>
+            <div id="improvements" style="font-size:12px; line-height:1.6"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <h5 style="font-size:13px; margin:8px 0; color:#27ae60">🎯 Specific Coaching Cues</h5>
+          <div id="coachingCues" style="font-size:12px; line-height:1.8"></div>
+        </div>
+
+        <div style="margin-top:14px">
+          <h5 style="font-size:13px; margin:8px 0; color:#e74c3c">⚠️ Injury Risk Factors</h5>
+          <div id="injuryRisks" style="font-size:12px; line-height:1.6"></div>
+        </div>
+
+        <div style="margin-top:14px">
+          <h5 style="font-size:13px; margin:8px 0">📈 Key Metrics Summary</h5>
+          <div id="metricsSummary" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px"></div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+
+  <!-- Algorithm Details -->
+  <div class="card" style="padding:16px; margin-top:16px">
+    <h3 style="margin-top:0">Implementation: Sport-Specific Analysis Algorithms</h3>
+    <p class="p">Each sport requires different biomechanical analysis. Here's how the system adapts:</p>
+    
+    <div class="grid two" style="margin-top:12px">
+      <div>
+        <h4 style="font-size:14px; margin-bottom:8px">Golf Swing Algorithm</h4>
+        <pre style="font-size:11px"><code>function analyzeGolfSwing(keypoints) {
+  // Extract key joints
+  const hip = getJoint('left_hip', keypoints);
+  const shoulder = getJoint('left_shoulder', keypoints);
+  const wrist = getJoint('left_wrist', keypoints);
+  
+  // Calculate X-factor (shoulder-hip rotation)
+  const hipAngle = calcRotation(hip);
+  const shoulderAngle = calcRotation(shoulder);
+  const xFactor = Math.abs(shoulderAngle - hipAngle);
+  
+  // Detect swing phase
+  if (wrist.y > hip.y && wrist.x < hip.x) {
+    phase = 'address';
+  } else if (wrist.y < shoulder.y && wrist.x < shoulder.x) {
+    phase = 'backswing';
+    if (xFactor > 45) {
+      feedback('good', 'Excellent X-factor: ' + xFactor + '°');
+    } else {
+      feedback('warning', 'Increase shoulder turn');
+    }
+  } else if (detectDownswing(wrist, prevWrist)) {
+    phase = 'downswing';
+    measureClubheadSpeed();
+  }
+  
+  // Check spine angle (should be ~30-40° at address)
+  const spineAngle = calcAngle(shoulder, hip, 'vertical');
+  if (spineAngle < 25 || spineAngle > 45) {
+    feedback('warning', 'Adjust spine angle: ' + spineAngle + '°');
+  }
+}</code></pre>
+      </div>
+      
+      <div>
+        <h4 style="font-size:14px; margin-bottom:8px">Sprint Mechanics Algorithm</h4>
+        <pre style="font-size:11px"><code>function analyzeSprintMechanics(keypoints) {
+  const leftKnee = calcAngle('left_hip', 'left_knee', 'left_ankle');
+  const rightKnee = calcAngle('right_hip', 'right_knee', 'right_ankle');
+  
+  // Detect stride phase
+  const leftAnkle = getJoint('left_ankle', keypoints);
+  const rightAnkle = getJoint('right_ankle', keypoints);
+  
+  if (leftAnkle.y > rightAnkle.y + 50) {
+    phase = 'right_stance';
+    
+    // Check knee drive (should be >90° at peak)
+    if (leftKnee > 90) {
+      feedback('good', 'Strong knee drive');
+    } else {
+      feedback('warning', 'Drive knee higher');
+    }
+    
+    // Check stance leg extension
+    if (rightKnee < 150) {
+      feedback('error', 'Extend stance leg fully');
+    }
+  }
+  
+  // Calculate stride frequency
+  if (detectFootStrike(leftAnkle, prevLeftAnkle)) {
+    const strideTime = Date.now() - lastStrikeTime;
+    const frequency = 60000 / strideTime; // steps/min
+    feedback('info', 'Cadence: ' + frequency.toFixed(0) + ' spm');
+  }
+  
+  // Check forward lean (should be 5-10°)
+  const lean = calcTorsoLean(shoulder, hip);
+  if (lean < 3) {
+    feedback('warning', 'Increase forward lean');
+  }
+}</code></pre>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <h4 style="font-size:14px; margin-bottom:8px">Cricket Bowling / Baseball Pitching</h4>
+      <pre style="font-size:11px"><code>function analyzePitchingMechanics(keypoints, sport) {
+  const rightShoulder = getJoint('right_shoulder', keypoints);
+  const rightElbow = getJoint('right_elbow', keypoints);
+  const rightWrist = getJoint('right_wrist', keypoints);
+  const rightHip = getJoint('right_hip', keypoints);
+  
+  // Calculate arm angle (abduction)
+  const armAngle = calcAngle(rightShoulder, rightElbow, 'horizontal');
+  
+  // Detect delivery phases
+  const elbowHeight = rightShoulder.y - rightElbow.y;
+  
+  if (elbowHeight < -50) {
+    phase = 'wind_up';
+  } else if (elbowHeight > 50 && armAngle > 80) {
+    phase = 'cocking';
+    
+    // Check for proper arm slot
+    if (armAngle > 85 && armAngle < 95) {
+      feedback('good', '3/4 arm slot optimal');
+    }
+    
+    // Warning for elbow strain risk
+    const elbowAngle = calcAngle(rightShoulder, rightElbow, rightWrist);
+    if (elbowAngle < 90) {
+      feedback('error', 'Elbow angle risky - injury risk!');
+    }
+  } else if (detectArmAcceleration(rightWrist, prevWrist) > threshold) {
+    phase = 'acceleration';
+    measureReleaseVelocity();
+  }
+  
+  // Hip-shoulder separation (important for both sports)
+  const hipRotation = calcRotation(rightHip, leftHip);
+  const shoulderRotation = calcRotation(rightShoulder, leftShoulder);
+  const separation = shoulderRotation - hipRotation;
+  
+  if (separation > 40) {
+    feedback('good', 'Strong kinetic chain');
+  }
+}</code></pre>
+    </div>
+  </div>
+
 </section>
 
 <footer>
-  <p>© 2025 • Manthankumar Patel• Hosted on GitHub Pages</p>
+  <p>© 2025 • Manthankumar Patel • Hosted on GitHub Pages</p>
 </footer>
 </main>
+
 <script src="script.js"></script>
 </body>
 </html>
